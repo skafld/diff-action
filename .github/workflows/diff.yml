@@ -1,0 +1,119 @@
+name: Diff
+on:
+  pull_request:
+    branches: ['main', 'releases/*']
+  push:
+    branches: ['main', 'releases/*']
+
+jobs:
+  # Run action
+  diff:
+    name: Diff
+    runs-on: ubuntu-22.04
+    outputs:
+      modules: ${{ steps.run.outputs.modules }}
+      changed: ${{ steps.run.outputs.changed }}
+      diff: ${{ steps.run.outputs.diff }}
+      tags: ${{ steps.run.outputs.tags }}
+    steps:
+    -
+      name: Checkout code
+      uses: actions/checkout@v3
+    -
+      uses: ./
+      id: run
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        modules: |
+          src:
+            tags: [ts]
+          dist:
+            tags: [js]
+            pattern: dist/*
+          workflows:
+            pattern: 
+              - .github/workflows/*
+    -
+      name: Print output
+      run: echo '${{ toJSON(steps.run.outputs) }}'
+
+  print-all:
+    needs: [diff]
+    name: Print all
+    runs-on: ubuntu-22.04
+    if: ${{ fromJson(needs.diff.outputs.changed) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJson(needs.diff.outputs.modules).all }}
+    steps:
+    -
+      name: Print module
+      run: echo '${{ matrix.module }}'
+    -
+      name: Print diff
+      run: echo '${{ toJSON(fromJson(needs.diff.outputs.diff)[matrix.module]) }}'
+    -
+      name: Print files
+      if: '${{ fromJson(needs.diff.outputs.diff)[matrix.module].changed }}'
+      run: echo '${{ toJSON(fromJson(needs.diff.outputs.diff)[matrix.module].files.all) }}'
+
+  print-changes:
+    needs: [diff]
+    name: Print changes
+    runs-on: ubuntu-22.04
+    if: ${{ fromJson(needs.diff.outputs.changed) }}
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJson(needs.diff.outputs.modules).changes }}
+    steps:
+    -
+      name: Print module
+      run: echo '${{ matrix.module }}'
+    -
+      name: Print diff
+      run: echo '${{ toJSON(fromJson(needs.diff.outputs.diff)[matrix.module]) }}'
+    -
+      name: Print files
+      run: echo '${{ toJSON(fromJson(needs.diff.outputs.diff)[matrix.module].files.all) }}'
+
+  print-ts:
+    needs: [diff]
+    name: Print ts
+    runs-on: ubuntu-22.04
+    if: ${{ fromJson(needs.diff.outputs.tags).ts.changed }}
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJson(needs.diff.outputs.tags).ts.modules }}
+    steps:
+    -
+      name: Print module
+      run: echo '${{ matrix.module }}'
+    -
+      name: Print diff
+      run: echo '${{ toJSON(fromJson(needs.diff.outputs.diff)[matrix.module]) }}'
+    -
+      name: Print files
+      run: echo '${{ toJSON(fromJson(needs.diff.outputs.diff)[matrix.module].files.all) }}'
+
+  print-js:
+    needs: [diff]
+    name: Print js
+    runs-on: ubuntu-22.04
+    if: ${{ fromJson(needs.diff.outputs.tags).js.changed }}
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJson(needs.diff.outputs.tags).js.modules }}
+    steps:
+    -
+      name: Print module
+      run: echo '${{ matrix.module }}'
+    -
+      name: Print diff
+      run: echo '${{ toJSON(fromJson(needs.diff.outputs.diff)[matrix.module]) }}'
+    -
+      name: Print files
+      run: echo '${{ toJSON(fromJson(needs.diff.outputs.diff)[matrix.module].files.all) }}'

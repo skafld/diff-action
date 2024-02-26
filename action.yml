@@ -1,0 +1,30 @@
+name: 'SKAFLD Diff'
+description: 'A GitHub Action that detects changes between commits/branches'
+author: 'Skafld <developers@skafld.io>'
+inputs:
+  base_ref:
+    required: false
+    description: 'Base commit ref'
+  head_ref:
+    required: false
+    description: 'Head commit ref'
+  repo_name:
+    required: false
+    description: 'Repo name'
+  repo_owner:
+    required: false
+    description: 'Repo owner'
+  token:
+    required: true
+    description: 'GH token'
+  modules:
+    default: '{}'
+    required: false
+    description: 'YAML string containing modules to track'
+  config:
+    default: ''
+    required: false
+    description: 'YAML file containing modules to track'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
